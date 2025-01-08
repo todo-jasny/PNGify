@@ -20,7 +20,7 @@ The main functionality is implemented via two classes: `PNGCcreator` for creatin
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/png-image-handler.git
+   git clone https://github.com/todo-jasny/PNGify.git
    cd png-image-handler
 
 2. Install with pip
