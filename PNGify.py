@@ -43,6 +43,7 @@ class PNGCreator:
             row.append(0)  # Add filter byte (0 = no filter)
             for x in range(self.width):
                 # Get the RGBA values for the current pixel
+
                 r, g, b, a = self.pixel_colors[y * self.width + x]
 
                 # Append R, G, B, A values to the row
@@ -81,7 +82,7 @@ class PNGReader:
         self.file_path = file_path
         self.width = 0
         self.height = 0
-        self.rgb_tuples = []
+        self.rgb_colors = []
 
     def read(self):
         """Read the PNG file and extract pixel data."""
@@ -108,7 +109,6 @@ class PNGReader:
                 if chunk_type == b'IHDR':
                     # Parse the IHDR chunk
                     self.width, self.height, _, self.color_type, *_ = struct.unpack('>IIBBBBB', chunk_data)
-                    print(self.color_type)
                 elif chunk_type == b'PLTE':
                     # Parse the PLTE chunk for Indexed-color mode
                     palette = [
@@ -123,7 +123,7 @@ class PNGReader:
 
             # Decompress IDAT chunk data and extract pixel data
             decompressed_data = zlib.decompress(compressed_data)
-            self.rgb_tuples = self.extract_pixel_data(decompressed_data, palette)
+            self.rgb_colors = self.extract_pixel_data(decompressed_data, palette)
 
     def extract_pixel_data(self, decompressed_data, palette):
         """Extract pixel data and convert to RGBA if needed."""
@@ -164,16 +164,19 @@ class PNGReader:
 
         return pixels
 
+
+# PNG modification functions
+
 def resize_png(file_path, new_width, new_height):
     """Resize the PNG to the specified new width and height."""
     reader = PNGReader(file_path)
     reader.read()
-    rgba_tuples = reader.rgb_tuples
+    rgba_colors = reader.rgb_colors
     old_height = reader.height
     old_width = reader.width
 
     # Create a list to store the resized RGBA pixel data
-    new_rgba_tuples = []
+    new_rgba_colors = []
 
     for i in range(new_height):
         for j in range(new_width):
@@ -182,13 +185,70 @@ def resize_png(file_path, new_width, new_height):
             orig_y = (i * old_height) // new_height
             
             # Get the pixel color from the original image
-            pixel_color = rgba_tuples[orig_y * old_width + orig_x]
-            new_rgba_tuples.append(pixel_color)
+            pixel_color = rgba_colors[orig_y * old_width + orig_x]
+            new_rgba_colors.append(pixel_color)
 
     # Create a new PNG image with the specified new dimensions and pixel data
-    creator = PNGCreator(new_width, new_height, new_rgba_tuples)
+    creator = PNGCreator(new_width, new_height, new_rgba_colors)
     output_file = os.path.splitext(file_path)[0] + f"_{new_width}x{new_height}.png"
     creator.save(output_file)
 
 
-resize_png(fr"c:\Users\albri\OneDrive\Pictures\Saved Pictures\Color_Blind_Number_2.png", 1000, 1000)
+def blur_png(file_path, radius=1):
+    """Blur the PNG using a simple blurring algorithm with a variable radius."""
+    reader = PNGReader(file_path)
+    reader.read()
+    rgba_colors = reader.rgb_colors
+    height = reader.height
+    width = reader.width
+
+    # Create a list to store the blurred RGBA pixel data
+    new_rgba_colors = []
+
+    for i in range(height):
+        for j in range(width):
+            # Get the neighboring pixels within the given radius
+            neighbors = get_neighboring_pixels(rgba_colors, width, i, j, radius)
+            # Average the color of the neighboring pixels
+            new_rgba_colors.append(average_color(neighbors))
+    
+    # Create a new PNG image with the same dimensions as the original image
+    creator = PNGCreator(width, height, new_rgba_colors)
+    output_file = os.path.splitext(file_path)[0] + f"_blurred_{radius}.png"
+    creator.save(output_file)
+    
+
+# Helper Functions
+
+def average_color(list_of_colors):
+    """Gets the average rgba color in a list"""
+    num_colors = len(list_of_colors)
+    
+    column_sums = [0] * 4  # RGBA sums
+    
+    # Sum each column's values
+    for t in list_of_colors:
+        for i in range(4):
+            column_sums[i] += t[i]
+    
+    # Calculate the average for each column and convert to int
+    averaged_color = tuple(int(sum_value / num_colors) for sum_value in column_sums)
+    
+    return averaged_color
+
+def get_neighboring_pixels(lst, width, row, col, radius):
+    """Gets the neighbors of a cell in a 2D grid represented as a 1D list, considering a blur radius."""
+    
+    neighbors = []
+    start_row = max(0, row - radius)
+    end_row = min(len(lst) // width, row + radius + 1)
+    start_col = max(0, col - radius)
+    end_col = min(width, col + radius + 1)
+
+    # Iterate over the square neighborhood defined by the radius
+    for i in range(start_row, end_row):
+        for j in range(start_col, end_col):
+            index = i * width + j
+            neighbors.append(lst[index])
+
+    return neighbors
