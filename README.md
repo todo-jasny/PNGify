@@ -21,7 +21,7 @@ The main functionality is implemented via two classes: `PNGCcreator` for creatin
 
    ```bash
    git clone https://github.com/todo-jasny/PNGify.git
-   cd png-image-handler
+   cd PNGify
 
 2. Install with pip
    ```bash
@@ -35,7 +35,7 @@ This project uses standard Python libraries such as struct, zlib, and os, which 
 To create a PNG image using the PNGCcreator class:
 
    ```bash
-   from png_creator import PNGCreator
+   from PNGify import PNGCreator
 
    # Define image dimensions and RGBA pixel data
    width = 256
@@ -51,7 +51,7 @@ To create a PNG image using the PNGCcreator class:
 To read a PNG image and extract RGBA pixel data using the PNGReader class:
 
 ```python
-from png_reader import PNGReader
+from PNGify import PNGReader
 
 # Define the path to the PNG file
 file_path = 'output_image.png'
@@ -68,11 +68,20 @@ rgba_pixels = png_reader.rgb_tuples
 To resize a PNG image to a new width and height:
 
 ```python
-from resize import resize_png
+from PNGify import resize_png
 
-# Resize the image to the new dimensions
-resize_png('output_image.png', 1000, 1000)
-This will create a resized version of the image with the dimensions 1000x1000 while preserving the image data.
+# Resize the image to the dimensions 1000 by 1000
+resize_png(file_path = 'image.png', new_width = 1000, new_height = 1000)
+```
+
+**Bluring a PNG Image**
+To blur a PNG Image using an integer blur radius
+
+```python
+from PNGify import blur_png
+
+# Blur the image with blur radius of 10
+blur_png(file_path = 'image.png', blur_radius = 10)
 ```
 
 Contributing
